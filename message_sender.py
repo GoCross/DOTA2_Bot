@@ -3,6 +3,10 @@
 import json
 import requests
 import config
+import threading
+import time
+from DBOper import get_no_succeed_one, send_success
+import Message
 
 url = config.MIRAI_URL
 # 群号
@@ -36,7 +40,8 @@ def message(m: str):
                 {"type": "Plain", "text": m}
             ]
         }
-    r = requests.post(url + "/sendGroupMessage", json.dumps(data))
+    send_result = requests.post(url + "/sendGroupMessage", json.dumps(data))
+    send_result.json()
     # release
     data = {
             "sessionKey": session_key,
@@ -44,3 +49,36 @@ def message(m: str):
         }
     r = requests.post(url + "/release", json.dumps(data))
     # print(r.text)
+    return send_result
+
+
+def do_send():
+    while True:
+        msg = get_no_succeed_one()
+        if msg is None:
+            time.sleep(60)
+            continue
+        ret = None
+        try:
+            ret = message(msg.message)
+            if ret is None:
+                send_error(msg)
+                continue
+        except BaseException:
+            send_error(msg)
+            continue
+        json_ret = ret.json()
+        if json_ret['code'] == 0 and json_ret['msg'] == 'success':
+            send_success(msg.id)
+        else:
+            send_error(msg)
+
+
+def send_error(msg: Message):
+    print('消息发送失败，消息id： %d' % msg.id)
+    time.sleep(60)
+
+
+def start_send():
+    t1 = threading.Thread(target=do_send)
+    t1.start()
