@@ -1,8 +1,10 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
+import json
+
 import requests
 from DOTA2_dicts import *
-from player import player
+from player import Player
 import random
 import time
 from typing import Dict
@@ -75,7 +77,7 @@ def get_match_detail_info(match_id: int) -> Dict:
 
 # 接收某局比赛的玩家列表, 生成比赛战报
 # 参数为玩家对象列表和比赛ID
-def generate_match_message(match_id: int, player_list: [player]):
+def generate_match_message(match_id: int, player_list: [Player]):
     try:
         match = get_match_detail_info(match_id=match_id)
     except DOTA2HTTPError:
@@ -116,6 +118,7 @@ def generate_match_message(match_id: int, player_list: [player]):
                 break
 
     team = player_list[0].dota2_team
+
     win = match['radiant_win'] == (team == 1)
 
     if mode_id in (15, 19):  # 各种活动模式仅简单通报

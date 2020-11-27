@@ -1,11 +1,12 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 import DOTA2
-from DBOper import update_DOTA2_match_ID
+from DBOper import update_DOTA2_match_ID, insert_message
 from player import PLAYER_LIST
 from typing import List, Dict
 from steam import gaming_status_watcher
 from message_sender import message as send
+
 
 def steam_id_convert_32_to_64(short_steamID: int) -> int:
     return short_steamID + 76561197960265728
@@ -47,7 +48,7 @@ def update_and_send_message_DOTA2():
             player_list=result[match_id]
         )
         if isinstance(msg, str):
-            send(msg)
+            insert_message(msg)
 
 
 def update_and_send_gaming_status():

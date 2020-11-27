@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 
-class player:
+class Player:
     # 基本属性
     short_steamID = 0
     long_steamID = 0
