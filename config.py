@@ -21,3 +21,6 @@ DEFAULT_NAME_ONLY = False
 
 # 是否启用Steam游戏状态监视
 ENABLE_STEAM_WATCHER = False
+
+# 消息是否分片，有时候mirai会发不出大消息
+FRAGMENT_MESSAGE = True

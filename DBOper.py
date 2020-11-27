@@ -61,7 +61,7 @@ def update_playing_game(short_steamID, gamename, timestamp):
 
 
 def insert_message(message):
-    c.execute('insert into message (message, send_succeed) values ({},0)'.format(message))
+    c.execute('insert into message (message, send_succeed) values (:message,0)', {'message': message})
     conn.commit()
 
 
@@ -73,7 +73,7 @@ def get_no_succeed_one() -> Message:
 
 
 def send_success(id: int):
-    c.execute('update message set send_succeed = 1 where id = {}'.format(id))
+    c.execute('update message set send_succeed = 1 where id = :id', {'id': id})
     conn.commit()
 
 

@@ -15,6 +15,7 @@ target = config.QQ_GROUP_ID
 bot_qq = config.BOT_QQ
 # mirai http的auth key
 authKey = config.MIRAI_AUTH_KEY
+fragment_message = config.FRAGMENT_MESSAGE
 
 
 def message(m: str):
@@ -34,44 +35,61 @@ def message(m: str):
         print(r.text)
         exit(2)
     data = {
-            "sessionKey": session_key,
-            "target": target,
-            "messageChain": [
-                {"type": "Plain", "text": m}
-            ]
-        }
+        "sessionKey": session_key,
+        "target": target,
+        "messageChain": [
+            {"type": "Plain", "text": m}
+        ]
+    }
     send_result = requests.post(url + "/sendGroupMessage", json.dumps(data))
     send_result.json()
     # release
     data = {
-            "sessionKey": session_key,
-            "qq": bot_qq
-        }
+        "sessionKey": session_key,
+        "qq": bot_qq
+    }
     r = requests.post(url + "/release", json.dumps(data))
     # print(r.text)
     return send_result
 
 
-def do_send():
+def send_message():
     while True:
         msg = get_no_succeed_one()
         if msg is None:
             time.sleep(60)
             continue
-        ret = None
-        try:
-            ret = message(msg.message)
-            if ret is None:
-                send_error(msg)
-                continue
-        except BaseException:
-            send_error(msg)
-            continue
-        json_ret = ret.json()
-        if json_ret['code'] == 0 and json_ret['msg'] == 'success':
+
+        if fragment_message:
+            succeed = send_fragment(msg.message)
+        else:
+            succeed = do_send(msg.message)
+
+        if succeed:
             send_success(msg.id)
         else:
             send_error(msg)
+
+
+def do_send(msg) -> bool:
+    try:
+        ret = message(msg)
+        if ret is None:
+            return False
+    except BaseException:
+        return False
+    json_ret = ret.json()
+    return json_ret['code'] == 0 and json_ret['msg'] == 'success'
+
+
+def send_fragment(msg) -> bool:
+    # 按行发送
+    lines = msg.split('\n')
+    for line in lines:
+        succeed = do_send(line)
+        if not succeed:
+            return False
+    return True
 
 
 def send_error(msg: Message):
@@ -80,5 +98,5 @@ def send_error(msg: Message):
 
 
 def start_send():
-    t1 = threading.Thread(target=do_send)
+    t1 = threading.Thread(target=send_message)
     t1.start()
