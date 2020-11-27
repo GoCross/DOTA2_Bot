@@ -1,5 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
+import json
+
 import requests
 from DOTA2_dicts import *
 from player import Player
@@ -7,6 +9,7 @@ import random
 import time
 from typing import Dict
 from config import API_KEY, ENABLE_URL, DEFAULT_NAME_ONLY
+
 
 # 异常处理
 class DOTA2HTTPError(Exception):
@@ -80,7 +83,6 @@ def generate_match_message(match_id: int, player_list: [Player]):
     except DOTA2HTTPError:
         return "DOTA2比赛战报生成失败"
 
-
     start_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(match['start_time']))
     duration = match['duration']
 
@@ -92,20 +94,10 @@ def generate_match_message(match_id: int, player_list: [Player]):
     lobby = LOBBY.get(lobby_id, '未知')
 
     player_num = len(player_list)
-    nicknames = '，'.join([player_list[i].nickname for i in range(-player_num,-1)])
+    nicknames = '，'.join([player_list[i].nickname for i in range(-player_num, -1)])
     if nicknames:
         nicknames += '和'
     nicknames += player_list[-1].nickname
-
-    team = player_list[0].dota2_team
-
-    win = match['radiant_win'] == (team == 1)
-    ying = "赢" if win else "输"
-
-    if mode_id in (15, 19):  # 各种活动模式仅简单通报
-        return '{}玩了一把[{}/{}]，开始于{}，持续{}分{}秒，看起来好像是{}了。'.format(
-            nicknames, mode, lobby, start_time, duration // 60, duration % 60, ying
-        )
 
     # 更新玩家对象的比赛信息
     for i in player_list:
@@ -125,6 +117,14 @@ def generate_match_message(match_id: int, player_list: [Player]):
                 i.xpm = j['xp_per_min']
                 break
 
+    team = player_list[0].dota2_team
+
+    win = match['radiant_win'] == (team == 1)
+
+    if mode_id in (15, 19):  # 各种活动模式仅简单通报
+        return '{}玩了一把[{}/{}]，开始于{}，持续{}分{}秒，看起来好像是{}了。'.format(
+            nicknames, mode, lobby, start_time, duration // 60, duration % 60, "赢" if win else "输"
+        )
     # 队伍信息
     team_damage = 0
     team_kills = 0
@@ -186,8 +186,8 @@ def generate_match_message(match_id: int, player_list: [Player]):
         tosend.append(
             '{}使用{}, KDA: {:.2f}[{}/{}/{}], GPM/XPM: {}/{}, ' \
             '补刀数: {}, 总伤害: {}({:.2f}%), 参战率: {:.2f}%, 参葬率: {:.2f}%' \
-            .format(nickname, hero, kda, kills, deaths, assists, gpm, xpm, last_hits,
-                    damage, damage_rate, participation, deaths_rate)
+                .format(nickname, hero, kda, kills, deaths, assists, gpm, xpm, last_hits,
+                        damage, damage_rate, participation, deaths_rate)
         )
 
     if ENABLE_URL:
